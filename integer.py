@@ -6,7 +6,7 @@ from typing import Any
 from attrs import define
 
 from digit import Digit, add_digit, decrement, increment, sub_digit
-from sign import Sign
+from sign import Sign, multiply_signs
 
 
 @define(slots=True, frozen=True)
@@ -29,7 +29,13 @@ class BigInteger:
     def negate(self) -> BigInteger:
         return BigInteger(self._digits, self._sign.negate())
 
-    def __gt__(self, other: BigInteger) -> bool:
+    def with_sign(self, sign: Sign) -> BigInteger:
+        return self if self._sign is sign else BigInteger(self._digits, sign)
+
+    def greater_than(self, other: BigInteger) -> bool:
+        """Calculate whether self is greater than other, both of which must be positive integers"""
+        assert not (self.is_negative or other.is_negative)
+
         if self.num_digits != other.num_digits:
             return self.num_digits > other.num_digits
 
@@ -39,6 +45,17 @@ class BigInteger:
             if left_digit is not right_digit:
                 return left_digit > right_digit
         return False
+
+    def __gt__(self, other: BigInteger | Any) -> bool:
+        if not isinstance(other, BigInteger):
+            raise NotImplementedError()
+        if self == other:
+            return False
+        if self.is_negative and other.is_negative:
+            return other.negate().greater_than(self.negate())
+        if self.is_negative or other.is_negative:
+            return other.is_negative
+        return self.greater_than(other)
 
     def _add(self, other: BigInteger) -> BigInteger:
         """Add two big integers"""
@@ -131,7 +148,7 @@ class BigInteger:
         if self.is_negative:
             # (-a) - (b) = -((a) - (-b)) = -((a) + (b))
             return self.negate()._add(other).negate()
-        if self > other:
+        if self.greater_than(other):
             return self.subtract(other)
         return other.subtract(self).negate()  # x - y = -1 * (y - x)
 
@@ -141,13 +158,11 @@ class BigInteger:
             raise ValueError(f"{power=} must be positive")
         return BigInteger(([Digit.ZERO] * power) + self._digits, self._sign)
 
-    def __mul__(self, other: BigInteger) -> BigInteger:
+    def multiply(self, other: BigInteger) -> BigInteger:
         """
         Multiply two numbers with multiple digits in them
         Use a power of 10 strategy, e.g. for num * 9091, evaluate as 9*num with three zeros at end, 9*num with 1 zero at end, and 1*num
         """
-        if self.is_zero or other.is_zero:
-            return ZERO
 
         @cache
         def calc_multiple(digit: Digit) -> BigInteger:
@@ -163,6 +178,15 @@ class BigInteger:
             for place, digit in enumerate(other._digits)
         )
         return sum(multiples, start=ZERO)
+
+    def __mul__(self, other: BigInteger | Any) -> BigInteger:
+        if not isinstance(other, BigInteger):
+            raise NotImplementedError()
+        if self.is_zero or other.is_zero:
+            return ZERO
+
+        result_sign = multiply_signs(self._sign, other._sign)
+        return self.multiply(other).with_sign(result_sign)
 
     @classmethod
     def from_integer(cls, integer: int) -> BigInteger:
