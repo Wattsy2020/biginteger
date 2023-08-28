@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from functools import cache
+
 from attrs import define
 
 from digit import Digit, add_digit
@@ -45,15 +47,41 @@ class BigInteger:
             result_digits.append(carry)
         return BigInteger(result_digits)
 
-    def __str__(self) -> str:
-        return "".join(map(str, reversed(self._digits)))
+    def multiply_tenth_power(self, power: int) -> BigInteger:
+        """Efficiently multiply by a tenth power, by adding zeros to the digits"""
+        if power < 0:
+            raise ValueError(f"{power=} must be positive")
+        return BigInteger(([Digit.ZERO] * power) + self._digits)
+
+    def __mul__(self, other: BigInteger) -> BigInteger:
+        """
+        Multiply two numbers with multiple digits in them
+        Use a power of 10 strategy, e.g. for num * 9091, evaluate as 9*num with three zeros at end, 9*num with 1 zero at end, and 1*num
+        """
+        if self.is_zero or other.is_zero:
+            return ZERO
+
+        @cache
+        def calc_multiple(digit: Digit) -> BigInteger:
+            """Return digit * self"""
+            if digit is Digit.ZERO:
+                return ZERO
+            if digit is Digit.ONE:
+                return self
+            return self + calc_multiple(digit.decrement())
+
+        result = ZERO
+        for place, digit in enumerate(other._digits):
+            multiply_result = calc_multiple(digit).multiply_tenth_power(place)
+            result = result + multiply_result
+        return result
 
     @classmethod
     def from_integer(cls, integer: int) -> BigInteger:
         if integer < 0:
             raise NotImplementedError()
         if integer == 0:
-            return BigInteger([Digit.ZERO])
+            return ZERO
 
         digits: list[Digit] = []
         while integer != 0:
@@ -65,3 +93,9 @@ class BigInteger:
         return sum(
             10**place * digit.to_integer() for place, digit in enumerate(self._digits)
         )
+
+    def __str__(self) -> str:
+        return "".join(map(str, reversed(self._digits)))
+
+
+ZERO = BigInteger([Digit.ZERO])
