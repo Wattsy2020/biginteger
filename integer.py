@@ -22,6 +22,10 @@ class BigInteger:
     def is_zero(self) -> bool:
         return self._digits == [Digit.ZERO]
 
+    @property
+    def is_negative(self) -> bool:
+        return self._sign is Sign.NEGATIVE
+
     def negate(self) -> BigInteger:
         return BigInteger(self._digits, self._sign.negate())
 
@@ -36,9 +40,9 @@ class BigInteger:
                 return left_digit > right_digit
         return False
 
-    def add(self, other: BigInteger) -> BigInteger:
+    def _add(self, other: BigInteger) -> BigInteger:
         """Add two big integers"""
-        assert self._sign is Sign.POSITIVE and other._sign is Sign.POSITIVE
+        assert not (self.is_negative or other.is_negative)
 
         result_digits: list[Digit] = []
         max_num_digits = max(self.num_digits, other.num_digits)
@@ -72,11 +76,18 @@ class BigInteger:
             return other
         if other.is_zero:
             return self
-        return self.add(other)
+        if self.is_negative and other.is_negative:
+            # (-a) + -(b) = -1(a + b)
+            return self.negate()._add(other.negate()).negate()
+        if other.is_negative:
+            return self - other.negate()
+        if self.is_negative:
+            return other - self.negate()
+        return self._add(other)
 
     def subtract(self, other: BigInteger) -> BigInteger:
         """Subtract other from self. self must be strictly larger than other"""
-        assert self._sign is Sign.POSITIVE and other._sign is Sign.POSITIVE
+        assert not (self.is_negative or other.is_negative)
 
         result_digits: list[Digit] = []
         max_num_digits = max(self.num_digits, other.num_digits)
@@ -113,10 +124,13 @@ class BigInteger:
             return self
         if self == other:
             return ZERO
-        if other._sign is Sign.NEGATIVE:
-            return self + other.negate()
-        if self._sign is Sign.NEGATIVE:
-            return other - self.negate()
+        if self.is_negative and other.is_negative:
+            return other.negate() - self.negate()  # (-a) - (-b) = (-a) + b = b - a
+        if other.is_negative:
+            return self._add(other.negate())
+        if self.is_negative:
+            # (-a) - (b) = -((a) - (-b)) = -((a) + (b))
+            return self.negate()._add(other).negate()
         if self > other:
             return self.subtract(other)
         return other.subtract(self).negate()  # x - y = -1 * (y - x)
