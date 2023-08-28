@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from functools import cache
+from typing import Any
 
 from attrs import define
 
@@ -19,7 +20,9 @@ class BigInteger:
     def is_zero(self) -> bool:
         return self._digits == [Digit.ZERO]
 
-    def __add__(self, other: BigInteger) -> BigInteger:
+    def __add__(self, other: BigInteger | Any) -> BigInteger:
+        if not isinstance(other, BigInteger):
+            raise NotImplementedError()
         if self.is_zero:
             return other
         if other.is_zero:
@@ -70,11 +73,11 @@ class BigInteger:
                 return self
             return self + calc_multiple(digit.decrement())
 
-        result = ZERO
-        for place, digit in enumerate(other._digits):
-            multiply_result = calc_multiple(digit).multiply_tenth_power(place)
-            result = result + multiply_result
-        return result
+        multiples = (
+            calc_multiple(digit).multiply_tenth_power(place)
+            for place, digit in enumerate(other._digits)
+        )
+        return sum(multiples, start=ZERO)
 
     @classmethod
     def from_integer(cls, integer: int) -> BigInteger:
