@@ -8,10 +8,10 @@ from digit import Digit, add_digit, sub_digit
     strategies.integers(min_value=0, max_value=9),
 )
 def test_add_digit(digit1: int, digit2: int) -> None:
-    result_digit, carry = add_digit(
-        Digit.from_integer(digit1), Digit.from_integer(digit2), Digit.ZERO
+    result_digit, carry_one = add_digit(
+        Digit.from_integer(digit1), Digit.from_integer(digit2)
     )
-    result_int = 10 * carry.to_integer() + result_digit.to_integer()
+    result_int = (10 if carry_one else 0) + result_digit.to_integer()
     assert result_int == digit1 + digit2
 
 

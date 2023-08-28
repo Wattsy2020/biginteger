@@ -88,20 +88,26 @@ class Digit(enum.Enum):
 
 
 @cache
-def increment(digit: Digit, carry: Digit) -> tuple[Digit, Digit]:
-    """Increment a digit and carry"""
-    if digit is Digit.NINE:
-        return (Digit.ZERO, carry.increment())
-    return (digit.increment(), carry)
+def decrement(digit: Digit) -> tuple[Digit, bool]:
+    """Decrement a digit, return (digit, whether to borrow a one"""
+    return (Digit.NINE, True) if digit is Digit.ZERO else (digit.decrement(), False)
 
 
 @cache
-def add_digit(digit1: Digit, digit2: Digit, carry: Digit) -> tuple[Digit, Digit]:
-    """Add the digits and carry, returning a tuple of (added digit, carry)"""
+def increment(digit: Digit) -> tuple[Digit, bool]:
+    """Increment a digit, return (digit, whether to carry a one)"""
+    return (Digit.ZERO, True) if digit is Digit.NINE else (digit.increment(), False)
+
+
+@cache
+def add_digit(digit1: Digit, digit2: Digit) -> tuple[Digit, bool]:
+    """Add the digits, returning a tuple of (added digit, whether a one is carried)"""
+    carry_one = False
     while digit1 is not Digit.ZERO:
         digit1 = digit1.decrement()
-        digit2, carry = increment(digit2, carry)
-    return (digit2, carry)
+        digit2, new_carry_one = increment(digit2)
+        carry_one = carry_one or new_carry_one
+    return (digit2, carry_one)
 
 
 @cache
