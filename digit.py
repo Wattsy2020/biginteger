@@ -75,6 +75,9 @@ class Digit(int, enum.Enum):
     def to_integer(self) -> int:
         return self.value
 
+    def __str__(self) -> str:
+        return str(self.value)
+
 
 @cache
 def increment(digit: Digit, carry: Digit) -> tuple[Digit, Digit]:
