@@ -4,7 +4,7 @@ import enum
 from functools import cache
 
 
-class Digit(int, enum.Enum):
+class Digit(enum.Enum):
     ZERO = 0
     ONE = 1
     TWO = 2
@@ -66,6 +66,14 @@ class Digit(int, enum.Enum):
             case Digit.NINE:
                 raise ValueError("Cannot increment 9")
 
+    def __gt__(self, other: Digit) -> bool:
+        left = self
+        right = other
+        while left is not Digit.ZERO and right is not Digit.ZERO:
+            left = left.decrement()
+            right = right.decrement()
+        return left is not Digit.ZERO
+
     @classmethod
     def from_integer(cls, integer: int) -> Digit:
         if integer < 0 or integer > 9:
@@ -94,3 +102,12 @@ def add_digit(digit1: Digit, digit2: Digit, carry: Digit) -> tuple[Digit, Digit]
         digit1 = digit1.decrement()
         digit2, carry = increment(digit2, carry)
     return (digit2, carry)
+
+
+@cache
+def sub_digit(digit1: Digit, digit2: Digit) -> Digit:
+    """Evaluate digit1 - digit2, note digit1 must be greater than digit2"""
+    while digit2 is not Digit.ZERO:
+        digit2 = digit2.decrement()
+        digit1 = digit1.decrement()
+    return digit1

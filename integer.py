@@ -20,6 +20,17 @@ class BigInteger:
     def is_zero(self) -> bool:
         return self._digits == [Digit.ZERO]
 
+    def __gt__(self, other: BigInteger) -> bool:
+        if self.num_digits != other.num_digits:
+            return self.num_digits > other.num_digits
+
+        for left_digit, right_digit in zip(
+            reversed(self._digits), reversed(other._digits)
+        ):
+            if left_digit is not right_digit:
+                return left_digit > right_digit
+        return False
+
     def __add__(self, other: BigInteger | Any) -> BigInteger:
         if not isinstance(other, BigInteger):
             raise NotImplementedError()
