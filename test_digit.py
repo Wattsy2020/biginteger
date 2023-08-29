@@ -20,9 +20,13 @@ def test_add_digit(digit1: int, digit2: int) -> None:
     strategies.integers(min_value=0, max_value=9),
 )
 def test_sub_digit(digit1: int, digit2: int) -> None:
-    if digit1 >= digit2:
-        result_digit = sub_digit(Digit.from_integer(digit1), Digit.from_integer(digit2))
-        assert result_digit.to_integer() == digit1 - digit2
+    result_digit, borrow_one = sub_digit(
+        Digit.from_integer(digit1), Digit.from_integer(digit2)
+    )
+    result_int = (
+        result_digit.to_integer() - 10 if borrow_one else result_digit.to_integer()
+    )
+    assert result_int == digit1 - digit2
 
 
 @given(

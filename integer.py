@@ -32,6 +32,9 @@ class BigInteger:
     def with_sign(self, sign: Sign) -> BigInteger:
         return self if self._sign is sign else BigInteger(self._digits, sign)
 
+    def absolute(self) -> BigInteger:
+        return self.with_sign(Sign.POSITIVE)
+
     def greater_than(self, other: BigInteger) -> bool:
         """Calculate whether self is greater than other, both of which must be positive integers"""
         assert not (self.is_negative or other.is_negative)
@@ -114,17 +117,14 @@ class BigInteger:
             left_digit = self._digits[i] if i < self.num_digits else Digit.ZERO
             right_digit = other._digits[i] if i < other.num_digits else Digit.ZERO
 
-            # subtract the borrow from the previous subtraction
             if borrow_one:
+                # subtract the borrow from the previous subtraction
                 left_digit, borrow_one = decrement(left_digit)
-
-            # evaluate the sum of the digits and carry
-            if right_digit > left_digit:
-                borrow_one = True
-                sub10 = sub_digit(Digit.NINE, right_digit).increment()
-                result_digits.append(add_digit(left_digit, sub10)[0])
+                result_digit, new_borrow_one = sub_digit(left_digit, right_digit)
+                borrow_one = borrow_one or new_borrow_one
             else:
-                result_digits.append(sub_digit(left_digit, right_digit))
+                result_digit, borrow_one = sub_digit(left_digit, right_digit)
+            result_digits.append(result_digit)
             i += 1
 
         # Remove leading zeros
@@ -185,8 +185,9 @@ class BigInteger:
         if self.is_zero or other.is_zero:
             return ZERO
 
+        absolute_result = self.absolute().multiply(other.absolute())
         result_sign = multiply_signs(self._sign, other._sign)
-        return self.multiply(other).with_sign(result_sign)
+        return absolute_result.with_sign(result_sign)
 
     @classmethod
     def from_integer(cls, integer: int) -> BigInteger:

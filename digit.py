@@ -101,19 +101,21 @@ def increment(digit: Digit) -> tuple[Digit, bool]:
 
 @cache
 def add_digit(digit1: Digit, digit2: Digit) -> tuple[Digit, bool]:
-    """Add the digits, returning a tuple of (added digit, whether a one is carried)"""
+    """Add digit1 + digit2, returning a tuple of (added digit, whether a one is carried)"""
     carry_one = False
-    while digit1 is not Digit.ZERO:
-        digit1 = digit1.decrement()
-        digit2, new_carry_one = increment(digit2)
+    while digit2 is not Digit.ZERO:
+        digit2 = digit2.decrement()
+        digit1, new_carry_one = increment(digit1)
         carry_one = carry_one or new_carry_one
-    return (digit2, carry_one)
+    return (digit1, carry_one)
 
 
 @cache
-def sub_digit(digit1: Digit, digit2: Digit) -> Digit:
-    """Evaluate digit1 - digit2, note digit1 must be greater than digit2"""
+def sub_digit(digit1: Digit, digit2: Digit) -> tuple[Digit, bool]:
+    """Evaluate digit1 - digit2, returning a tuple of (subtracted digit, whether a one is borrowed i.e. the digit1 < digit2 and the result is 10 + (digit1 - digit2))"""
+    borrow_one = False
     while digit2 is not Digit.ZERO:
         digit2 = digit2.decrement()
-        digit1 = digit1.decrement()
-    return digit1
+        digit1, new_borrow_one = decrement(digit1)
+        borrow_one = borrow_one or new_borrow_one
+    return (digit1, borrow_one)
